@@ -1,0 +1,38 @@
+services:
+  mongo:
+    image: mongo:8
+    container_name: mongodb_lab5
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: vt241lmv_db_user
+      MONGO_INITDB_ROOT_PASSWORD: jPza9ORrUFEQhuPY
+      MONGO_INITDB_DATABASE: movies_db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: node_app_lab5
+    ports:
+      - "3000:3000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      MONGODB_URI: mongodb://vt241lmv_db_user:jPza9ORrUFEQhuPY@mongo:27017/movies_db?authSource=admin
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  mongo-data:
