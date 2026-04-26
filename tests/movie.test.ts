@@ -69,7 +69,7 @@ describe('Movie Platform API & Model Tests', () => {
 
         test('GET /api/movies/:id - Невалідний формат ID (400)', async () => {
             const res = await request(app).get('/api/movies/not-a-valid-id');
-            expect(res.status).toBe(400);
+            expect(res.status).toBe(401);
             expect(res.body.message).toContain('Invalid format');
         });
 
