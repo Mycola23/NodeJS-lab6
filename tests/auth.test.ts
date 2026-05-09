@@ -49,7 +49,7 @@ describe('Auth System Integration Tests', () => {
             const res = await request(app).post('/auth/login').send(userCredentials);
 
             expect(res.status).toBe(200);
-            const cookies = res.get('Set-Cookie');
+            const cookies = res.get('Set-Cookie') || [];
 
             expect(cookies.some(c => c.includes('access_token'))).toBe(true);
             expect(cookies.some(c => c.includes('refresh_token'))).toBe(true);
@@ -81,22 +81,22 @@ describe('Auth System Integration Tests', () => {
         beforeEach(async () => {
             await request(app).post('/auth/register').send(userCredentials);
             const loginRes = await request(app).post('/auth/login').send(userCredentials);
-            refreshCookie = loginRes.get('Set-Cookie').find(c => c.startsWith('refresh_token'))!;
+            refreshCookie = loginRes.get('Set-Cookie')!.find(c => c.startsWith('refresh_token'))!;
         });
 
         test('Оновлення токенів через /auth/refresh', async () => {
             const res = await request(app).post('/auth/refresh').set('Cookie', [refreshCookie]);
 
             expect(res.status).toBe(200);
-            expect(res.get('Set-Cookie').some(c => c.includes('access_token'))).toBe(true);
+            expect(res.get('Set-Cookie')!.some(c => c.includes('access_token'))).toBe(true);
         });
 
         test('Вихід із системи /auth/logout - очищення cookies', async () => {
             const res = await request(app).post('/auth/logout');
 
             expect(res.status).toBe(200);
-            const cookies = res.get('Set-Cookie');
-            expect(cookies[0]).toMatch(/access_token=;|(Max-Age=0)/);
+            const cookies = res.get('Set-Cookie')!;
+            expect(cookies[0])!.toMatch(/access_token=;|(Max-Age=0)/);
         });
     });
 });
