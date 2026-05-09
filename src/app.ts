@@ -5,9 +5,10 @@ import { errorHandler } from './middleware/errorHandler';
 import mongoose from 'mongoose';
 import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth.routes';
+import { Request, Response } from 'express';
 const app = express();
 
-app.get('/health', (req, res) => {
+app.get('/health', (req: Request, res: Response) => {
     // 1 = connected, 0 = disconnected, 2 = connecting, 3 = disconnecting
     const isConnected = mongoose.connection.readyState === 1;
 

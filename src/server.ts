@@ -6,13 +6,13 @@ import cors from 'cors';
 import mongoose from 'mongoose';
 import { connectDB } from './config/database';
 import app from './app';
-
+import { Request, Response } from 'express';
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
 
-app.get('/', (req, res) => {
+app.get('/', (req: Request, res: Response) => {
     res.send('api works,db connected');
 });
 
