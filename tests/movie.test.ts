@@ -2,20 +2,40 @@ import request from 'supertest';
 import app from '../src/app';
 import { connectTestDB, closeTestDB, clearCollections } from './setup';
 import { MovieModel } from '../src/models/movie.model';
+import { UserModel } from '../src/models/user.model';
+import mongoose from 'mongoose';
 
 describe('Movie Platform API & Model Tests', () => {
-    beforeAll(async () => await connectTestDB());
+    let authCookie: string[];
+    let testUserId: mongoose.Types.ObjectId;
+    let validMovie: any;
+
+    beforeAll(async () => {
+        await connectTestDB();
+    });
+
+    beforeEach(async () => {
+        const credentials = { email: 'movietester@example.com', password: 'password123' };
+        await request(app).post('/auth/register').send(credentials);
+
+        const loginRes = await request(app).post('/auth/login').send(credentials);
+        authCookie = loginRes.get('Set-Cookie') as string[];
+
+        const user = await UserModel.findOne({ email: credentials.email });
+        testUserId = user!._id as mongoose.Types.ObjectId;
+
+        validMovie = {
+            title: 'Inception',
+            genre: 'Sci-Fi',
+            rating: 4.8,
+            releaseYear: 2010,
+            director: 'Christopher Nolan',
+            actors: ['Leonardo DiCaprio'],
+            ownerId: testUserId,
+        };
+    });
     afterAll(async () => await closeTestDB());
     afterEach(async () => await clearCollections());
-
-    const validMovie = {
-        title: 'Inception',
-        genre: 'Sci-Fi',
-        rating: 4.8,
-        releaseYear: 2010,
-        director: 'Christopher Nolan',
-        actors: ['Leonardo DiCaprio'],
-    };
 
     describe('Movie Model Unit Tests', () => {
         test('Має створювати createdAt та updatedAt автоматично', async () => {
@@ -46,7 +66,7 @@ describe('Movie Platform API & Model Tests', () => {
 
     describe('Integration API Tests', () => {
         test('POST /api/movies - Успішне створення (201)', async () => {
-            const res = await request(app).post('/api/movies').send(validMovie);
+            const res = await request(app).post('/api/movies').set('Cookie', authCookie).send(validMovie);
             expect(res.status).toBe(201);
             expect(res.body.title).toBe('Inception');
             expect(res.body.id).toBeDefined();
@@ -81,7 +101,8 @@ describe('Movie Platform API & Model Tests', () => {
 
         test('PATCH /api/movies/:id - Успішне оновлення', async () => {
             const movie = await MovieModel.create(validMovie);
-            const res = await request(app).patch(`/api/movies/${movie._id}`).send({ rating: 4.9 });
+            const res = await request(app).patch(`/api/movies/${movie._id}`).set('Cookie', authCookie).send({ rating: 4.9 });
+
             expect(res.status).toBe(200);
             expect(res.body.rating).toBe(4.9);
         });

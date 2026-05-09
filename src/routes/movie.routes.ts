@@ -3,6 +3,7 @@ import { movieStorage } from '../storage/movie';
 import { createMovieSchema, updateMovieSchema } from '../schemas/movie.schema';
 import { validate } from '../middleware/validate';
 import { MovieModel } from '../models/movie.model';
+import { requireAuth } from '../middleware/auth.middleware';
 
 const router = Router();
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
@@ -46,35 +47,41 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
     }
 });
 
-router.post('/', validate(createMovieSchema), async (req: Request, res: Response, next: NextFunction) => {
+router.post('/', requireAuth, validate(createMovieSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const newMovie = await movieStorage.create(req.body);
+        const newMovie = await movieStorage.create({ ...req.body, ownerId: req.userId });
         res.status(201).json(newMovie);
     } catch (error) {
         next(error);
     }
 });
 
-router.patch('/:id', validate(updateMovieSchema), async (req: Request, res: Response, next: NextFunction) => {
+router.patch('/:id', requireAuth, validate(updateMovieSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { id } = req.params;
-        const updated = await movieStorage.update(id as string, req.body);
+        const movie = await MovieModel.findById(req.params.id);
+        if (!movie) return res.status(404).json({ message: 'Not found' });
 
-        if (!updated) {
-            return res.status(404).json({ message: 'Movie not found' });
+        if (movie.ownerId.toString() !== req.userId) {
+            return res.status(403).json({ message: 'Forbidden: You are not the owner' });
         }
+
+        const updated = await movieStorage.update(req.params.id as string, req.body);
         res.json(updated);
     } catch (error) {
         next(error);
     }
 });
 
-router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
+router.delete('/:id', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const deleted = await movieStorage.delete(req.params.id as string);
-        if (!deleted) {
-            return res.status(404).json({ message: 'Movie not found' });
+        const movie = await MovieModel.findById(req.params.id);
+        if (!movie) return res.status(404).json({ message: 'Not found' });
+
+        if (movie.ownerId.toString() !== req.userId) {
+            return res.status(403).json({ message: 'Forbidden: You are not the owner' });
         }
+
+        await movieStorage.delete(req.params.id as string);
         res.status(204).send();
     } catch (error) {
         next(error);

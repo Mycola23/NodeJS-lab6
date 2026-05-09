@@ -9,7 +9,10 @@
         // See also https://aka.ms/tsconfig/module
         "module": "nodenext",
         "target": "esnext",
-        "types": [],
+        "types": ["jest", "node"],
+        "paths": {
+            "*": ["./node_modules/*"]
+        },
         // For nodejs:
         // "lib": ["esnext"],
         // "types": ["node"],
@@ -42,5 +45,5 @@
         "esModuleInterop": true,
         "skipLibCheck": true
     },
-    "include": ["src/**/*"]
+    "include": ["src/**/*", "tests/**/*"]
 }

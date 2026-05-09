@@ -23,6 +23,7 @@ export interface IMovie {
     createdAt?: Date;
     updatedAt?: Date;
     isClassic?: boolean;
+    ownerId: Schema.Types.ObjectId;
 }
 
 export interface MovieDocument extends IMovie, Document {}
@@ -93,6 +94,11 @@ const MovieSchema = new Schema<MovieDocument>(
         actors: {
             type: [String],
             default: [],
+        },
+        ownerId: {
+            type: Schema.Types.ObjectId,
+            ref: 'User',
+            required: true,
         },
     },
     {

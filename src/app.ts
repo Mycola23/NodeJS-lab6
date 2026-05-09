@@ -3,7 +3,8 @@ import cors from 'cors';
 import movieRoutes from './routes/movie.routes';
 import { errorHandler } from './middleware/errorHandler';
 import mongoose from 'mongoose';
-
+import cookieParser from 'cookie-parser';
+import authRoutes from './routes/auth.routes';
 const app = express();
 
 app.get('/health', (req, res) => {
@@ -26,7 +27,9 @@ app.get('/health', (req, res) => {
 
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
 
+app.use('/auth', authRoutes);
 app.use('/api/movies', movieRoutes);
 
 app.use(errorHandler);
